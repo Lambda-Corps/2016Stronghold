@@ -1,0 +1,293 @@
+package org.usfirst.frc.team1895.robot.subsystems;
+
+import org.usfirst.frc.team1895.robot.Robot;
+import org.usfirst.frc.team1895.robot.RobotMap;
+import org.usfirst.frc.team1895.robot.commands.ManipulatorSensorDefaultCommand;
+
+import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+public class ManipulatorSubsystem extends Subsystem {
+	
+	//motors go here
+//	private CANTalon left_arm_motor; //These are paired motors; have to be the same
+//	private CANTalon right_arm_motor;//
+//	
+//	private CANTalon intake_motor;
+	private Talon intake_motor;
+	private Talon left_arm_motor;
+	private Talon right_arm_motor;
+
+	public DigitalInput outerSensor;
+	public DigitalInput innerSensor;
+	 
+	private DigitalInput arm_switch_upper_limit;
+	private DigitalInput arm_switch_middle;
+	private DigitalInput arm_switch_lower_limit;
+	
+	private int boulderState;
+	
+	/* 
+	 *  These are the state variables for the locations that the arm buttons will travel to. The states are:
+	 *  0 = unknown
+	 *  1 = on middle switch
+	 *  2 = lower limit swtich
+	 *  3 = upper limit switch
+	 */
+	public static final int armStateUnknown = 0;
+	public static final int armStateMiddle = 2;
+	public static final int armStateLowerLimit = 1;
+	public static final int armStateUpperLimit = 3;
+	
+	private int armPositionState ;
+	
+	boolean lower;
+	boolean middle;
+	boolean upper;
+	/***/
+	public ManipulatorSubsystem() {
+//		left_arm_motor = new CANTalon(RobotMap.hinge2_motor_port);
+//		right_arm_motor = new CANTalon(RobotMap.hinge1_motor_port);
+//		
+//		intake_motor = new CANTalon(RobotMap.intake_motor_port);
+		intake_motor = new Talon(RobotMap.intake_motor_port);
+		left_arm_motor = new Talon(1);
+		right_arm_motor = new Talon(0);
+
+		innerSensor = new DigitalInput(RobotMap.inner_boulder_port);
+		outerSensor = new DigitalInput(RobotMap.outer_boulder_port);
+		
+		arm_switch_upper_limit = new DigitalInput(RobotMap.arm_switch_upper_limit_port);
+		arm_switch_middle = new DigitalInput(RobotMap.arm_switch_middle_port);
+		arm_switch_lower_limit = new DigitalInput(RobotMap.arm_switch_lower_limit_port);
+		
+		// TODO REmove
+		lower = middle = upper = false;
+		
+		SmartDashboard.putNumber("armPositionState",  armPositionState);
+		SmartDashboard.putBoolean("Sensor Mid",  middle);
+		SmartDashboard.putBoolean("Sensor Up",  upper);
+		SmartDashboard.putBoolean("Sensor Low",  lower);
+		
+		
+		boulderState = 0;
+		armPositionState = armStateUnknown;
+		armPositionState = 2;
+		
+		
+ 	}
+	
+	/*This method moves the arm between the three available magnet switches**/
+	public boolean moveArm(int toPosition) {
+		double speed = 0.0;
+		final double SpeedMovingUp = 0.75;
+		final double SpeedMovingDown = -0.45;
+	
+		System.out.println ("toPosition " + toPosition +  " "  + armPositionState);
+		System.out.println("Sensors: ================   "+ arm_switch_upper_limit.get() + arm_switch_middle.get() + " "  + arm_switch_lower_limit.get());
+		if(toPosition > 3 || toPosition < 1) {
+			System.out.println("case 1");
+			return false;
+		}
+		
+		if(toPosition == armPositionState) {
+			System.out.println("armPositionState " + armPositionState);
+			System.out.println("case 2");
+			return true;
+		}
+		
+		if(armPositionState == armStateUnknown) {
+			System.out.println("case 3");
+			return false;
+		}
+		
+		System.out.println ("Sensors: ================  "+ arm_switch_middle.get() + " " +  arm_switch_upper_limit.get() + " " + arm_switch_lower_limit.get());
+		System.out.println("armPosition: ==================   "+ armPositionState );
+		
+		switch(armPositionState) { 
+		case armStateLowerLimit:
+			speed = SpeedMovingUp;
+			break;
+		case armStateUpperLimit:
+			speed = SpeedMovingDown;
+			break;
+		case armStateMiddle:
+			if(toPosition < armStateMiddle) {
+				speed = SpeedMovingDown;
+			}
+			else {
+				speed = SpeedMovingUp;
+			}
+			break;
+			default:
+			break;
+		}
+		
+		SmartDashboard.putNumber("speed",  speed);
+		switch(armPositionState) {
+		case armStateLowerLimit:
+			System.out.println("Lower limit");
+			if(toPosition == armStateMiddle) {
+				if(!arm_switch_middle.get()) {
+					left_arm_motor.set(speed);	//going up
+					right_arm_motor.set(speed);
+				}
+				left_arm_motor.set(0.0);
+				right_arm_motor.set(0.0);
+				armPositionState = armStateMiddle;
+			}
+			else {
+				if(!arm_switch_upper_limit.get()) {
+					left_arm_motor.set(speed);	//going up
+					right_arm_motor.set(speed);
+				}
+				left_arm_motor.set(0.0);
+				right_arm_motor.set(0.0);
+				armPositionState = armStateUpperLimit;
+			}
+			break;
+		case armStateUpperLimit:	
+			System.out.println("Upper limit");
+			if(toPosition == armStateMiddle) {
+				if(!arm_switch_middle.get()) {
+					left_arm_motor.set(speed);	//going down
+					right_arm_motor.set(speed);
+				}
+				left_arm_motor.set(0.0);
+				right_arm_motor.set(0.0);
+				armPositionState = armStateMiddle;
+			}
+			else {
+				if(!arm_switch_lower_limit.get()) {
+					left_arm_motor.set(speed);	//going down
+					right_arm_motor.set(speed);
+				}
+				left_arm_motor.set(0.0);
+				right_arm_motor.set(0.0);
+				armPositionState = armStateLowerLimit;
+			}
+			break;
+		case armStateMiddle:
+			System.out.println("middle");
+			if(toPosition == armStateUpperLimit) {
+				if(!arm_switch_upper_limit.get()) {
+					left_arm_motor.set(speed);	//going down   (shouldn't this be going up?)
+					right_arm_motor.set(speed);
+				}
+				left_arm_motor.set(0.0);
+				right_arm_motor.set(0.0);
+				armPositionState = armStateUpperLimit;
+			}
+			else {
+				if(!arm_switch_lower_limit.get()) {
+					left_arm_motor.set(speed);	//going down
+					right_arm_motor.set(speed);
+				}
+				left_arm_motor.set(0.0);
+				right_arm_motor.set(0.0);
+				armPositionState = armStateLowerLimit;
+			}
+			break;
+		}	
+			if(armPositionState == armStateUnknown) {
+				left_arm_motor.set(0.1);	
+				right_arm_motor.set(0.1);
+				System.out.println("stateUnknown");
+			}
+		return true;
+	}
+		
+		
+	public void checkSensorValues(){
+//		System.out.println("Check sensor values");
+		lower = arm_switch_lower_limit.get();
+		middle = arm_switch_middle.get();
+		upper = arm_switch_upper_limit.get();
+	}
+	
+	
+	public void manuallyMoveArm(double speed) {
+		System.out.println("Manually Moving Arm with Speed: " + speed);
+		SmartDashboard.putNumber("Manual Speed", speed);
+		if(speed > 0) { 
+			left_arm_motor.set(speed * 0.75);	//going down
+			right_arm_motor.set(speed* 0.75);
+		} else if(speed < 0) {
+			left_arm_motor.set(speed * 0.45);	//going up
+			right_arm_motor.set(speed* 0.45);
+		} else {
+			left_arm_motor.set( 0.0);
+			right_arm_motor.set(0.0);
+		}
+		
+//		if(arm_switch_lower_limit.get()) {
+//			left_arm_motor.set( 0.0);
+//			right_arm_motor.set(0.0);
+//			armPositionState = armStateLowerLimit;
+//		}
+//		else if(arm_switch_middle.get()){
+//			left_arm_motor.set( 0.0);
+//			right_arm_motor.set(0.0);
+//			armPositionState = armStateMiddle;
+//		}
+//		else if(arm_switch_upper_limit.get()) {
+//			left_arm_motor.set( 0.0);
+//			right_arm_motor.set(0.0);
+//			armPositionState = armStateUpperLimit;
+//		}
+	}
+	
+	
+	/***/
+	public void intakeSpeed(double velocity) {
+		
+		intake_motor.set(velocity);
+	}
+	
+	/***/
+	public int getState() {
+		return boulderState;
+	}
+	
+	/***/
+	public void updateState() {
+		System.out.println("updateState start");
+		SmartDashboard.putBoolean("getOuterSensor", outerSensor.get());
+		SmartDashboard.putBoolean("getInnerSensor", innerSensor.get());
+		if(innerSensor.get()==false && outerSensor.get()==false && boulderState==3) boulderState=0; //not in range; just left
+		if(innerSensor.get()==false && outerSensor.get()==true  && boulderState==0) boulderState=1; //boulder detected; intaking
+		if(innerSensor.get()==true  && outerSensor.get()==true  && boulderState==1) boulderState=2; //boulder held
+		if(Robot.oi.joy.getRawButton(1)                         && boulderState==2) boulderState=3; //firing
+		SmartDashboard.putNumber("updateState", boulderState);
+
+	}
+	
+	public void updateMotorState() {
+		switch(boulderState) {
+			case 0:
+				intake_motor.set( 0.0);
+				break;
+			case 1:
+				intake_motor.set(0.55);
+				break;
+			case 2:
+				intake_motor.set( 0.0);
+				break;
+			case 3:
+				intake_motor.set(-0.75);
+				break;
+		}
+		//System.out.println("UpdateMotorState");
+		//System.out.println ("Sensors: "+ arm_switch_middle.get() + " " +  arm_switch_upper_limit.get() + " " + arm_switch_lower_limit.get());
+	}
+	
+
+	public void initDefaultCommand() {
+		setDefaultCommand(new ManipulatorSensorDefaultCommand());
+//		System.out.println("initializae default command for manipulator");
+	}
+}
+
