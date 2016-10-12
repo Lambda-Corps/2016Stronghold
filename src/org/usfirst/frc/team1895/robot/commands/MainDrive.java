@@ -4,7 +4,7 @@ import edu.wpi.first.wpilibj.command.Command;
 
 import org.usfirst.frc.team1895.robot.Robot;
 
-import org.usfirst.frc.team1895.robot.enums.F310Axis;
+import org.usfirst.frc.team1895.robot.custom.F310.Axis;
 
 public class MainDrive extends Command {
 
@@ -17,10 +17,10 @@ public class MainDrive extends Command {
 	}
 
 	protected void execute() {
-//		Robot.driveTrain.basicArcadeDrive(Robot.oi.f310.getScaledAxis(F310Axis.RX), Robot.oi.f310.getScaledAxis(F310Axis.LY)); //   Different scaling
-		Robot.driveTrain.basicArcadeDrive(Robot.oi.f310.getScaledAxis(F310Axis.RX), Robot.oi.f310.getScaledAxis(F310Axis.LY)); //Avalannnn
-		//Robot.driveTrain.basicTankDrive(Robot.oi.f310.getScaledAxis(F310Axis.LY), Robot.oi.f310.getScaledAxis(F310Axis.RY)); //Ethan
-		//Robot.driveTrain.driveCar(Robot.oi.f310.getScaledAxis(F310Axis.RX), Robot.oi.f310.getScaledAxis(F310Axis.LY)); //Ethan's Clone
+		//Robot.driveTrain.basicArcadeDrive(Robot.oi.f310.get(Axis.RX), Robot.oi.f310.get(Axis.LY)); //   Different scaling
+		//Robot.driveTrain.basicArcadeDrive(Robot.oi.f310.get(Axis.RX), Robot.oi.f310.get(Axis.LY)); //Avalannnn
+		Robot.driveTrain.basicTankDrive(Robot.oi.f310.get(Axis.LY), Robot.oi.f310.get(Axis.RY)); //Ethan
+		//Robot.driveTrain.driveCar(Robot.oi.f310.get(Axis.RX), Robot.oi.f310.get(Axis.LY)); //Ethan's Clone
 	}
 
 	protected boolean isFinished() {
